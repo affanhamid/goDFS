@@ -7,8 +7,8 @@ import (
 	"github.com/affanhamid/goDFS/p2p"
 )
 
-func Onpeer(p2p.Peer) error {
-	println("doing some logic with the peer outside of TCPTransport")
+func Onpeer(peer p2p.Peer) error {
+	peer.Close()
 	return nil
 }
 

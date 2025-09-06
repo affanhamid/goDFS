@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"io/fs"
 	"log"
 	"os"
 	"strings"
@@ -23,7 +22,7 @@ func CASPathTransformFunc(key string) PathKey {
 
 	paths := make([]string, sliceLen)
 
-	for i := 0; i < sliceLen; i++ {
+	for i := range sliceLen {
 		from, to := i*blockSize, (i*blockSize)+blockSize
 		paths[i] = hashStr[from:to]
 	}
@@ -74,9 +73,11 @@ type Store struct {
 
 func NewStore(opts StoreOpts) *Store {
 	if opts.PathTransformFunc == nil {
+		log.Println("using No-Op path transform function")
 		opts.PathTransformFunc = NOPPathTransformFunc
 	}
 	if opts.Root == "" {
+		log.Println("using default root folder name: ", defaultRootFolderName)
 		opts.Root = defaultRootFolderName
 	}
 	return &Store{
@@ -90,7 +91,11 @@ func (s *Store) Has(key string) bool {
 	fullPathWithRoot := fmt.Sprintf("%s/%s", s.Root, pathKey.FullPath())
 
 	_, err := os.Stat(fullPathWithRoot)
-	return err != fs.ErrNotExist
+	return !os.IsNotExist(err)
+}
+
+func (s *Store) Clear() error {
+	return os.RemoveAll(s.Root)
 }
 
 func (s *Store) Delete(key string) error {

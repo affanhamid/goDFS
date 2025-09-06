@@ -2,69 +2,61 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestPathTransformFunc(t *testing.T) {
 	key := "momsbestpicture"
 	pathKey := CASPathTransformFunc(key)
-	expectedOriginalKey := "6804429f74181a63c50c3d81d733a12f14a353ff"
+	expectedFileName := "6804429f74181a63c50c3d81d733a12f14a353ff"
 	expectedPathName := "68044/29f74/181a6/3c50c/3d81d/733a1/2f14a/353ff"
 	if pathKey.PathName != expectedPathName {
 		t.Errorf("have %s, want %s", pathKey.PathName, expectedPathName)
 	}
 
-	if pathKey.FileName != expectedOriginalKey {
-		t.Errorf("have %s, want %s", pathKey.PathName, expectedOriginalKey)
-	}
-}
-
-func TestStoreDeleteKey(t *testing.T) {
-	opts := StoreOpts{
-		PathTransformFunc: CASPathTransformFunc,
-	}
-	s := NewStore(opts)
-
-	key := "momsspecials"
-
-	data := []byte("some jpg bytes")
-
-	if err := s.writeStream(key, bytes.NewReader(data)); err != nil {
-		t.Error(err)
-	}
-
-	if err := s.Delete(key); err != nil {
-		t.Error(err)
+	if pathKey.FileName != expectedFileName {
+		t.Errorf("have %s, want %s", pathKey.PathName, expectedFileName)
 	}
 }
 
 func TestStore(t *testing.T) {
+	s := newStore()
+	defer teardown(t, s)
+
+	for i := range 100 {
+		key := fmt.Sprintf("foo_%d", i)
+
+		data := []byte("some jpg bytes")
+
+		assert.NoError(t, s.writeStream(key, bytes.NewReader(data)))
+
+		assert.True(t, s.Has(key))
+
+		r, err := s.Read(key)
+		assert.NoError(t, err)
+
+		b, _ := io.ReadAll(r)
+		assert.Equal(t, string(b), string(data))
+
+		assert.NoError(t, s.Delete(key))
+
+		fmt.Println("key", key, "has", s.Has(key))
+		assert.False(t, s.Has(key))
+
+	}
+}
+
+func newStore() *Store {
 	opts := StoreOpts{
 		PathTransformFunc: CASPathTransformFunc,
 	}
-	s := NewStore(opts)
-	key := "momsspecials"
+	return NewStore(opts)
+}
 
-	data := []byte("some jpg bytes")
-
-	if err := s.writeStream(key, bytes.NewReader(data)); err != nil {
-		t.Error(err)
-	}
-
-	if ok := s.Has(key); !ok {
-		t.Errorf("key %s should exist", key)
-	}
-
-	r, err := s.Read(key)
-	if err != nil {
-		t.Error(err)
-	}
-
-	b, _ := io.ReadAll(r)
-	if string(b) != string(data) {
-		t.Errorf("have %s,have %s", data, b)
-	}
-
-	s.Delete(key)
+func teardown(t *testing.T, s *Store) {
+	assert.NoError(t, s.Clear())
 }

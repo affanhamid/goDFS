@@ -20,6 +20,25 @@ func TestPathTransformFunc(t *testing.T) {
 	}
 }
 
+func TestStoreDeleteKey(t *testing.T) {
+	opts := StoreOpts{
+		PathTransformFunc: CASPathTransformFunc,
+	}
+	s := NewStore(opts)
+
+	key := "momsspecials"
+
+	data := []byte("some jpg bytes")
+
+	if err := s.writeStream(key, bytes.NewReader(data)); err != nil {
+		t.Error(err)
+	}
+
+	if err := s.Delete(key); err != nil {
+		t.Error(err)
+	}
+}
+
 func TestStore(t *testing.T) {
 	opts := StoreOpts{
 		PathTransformFunc: CASPathTransformFunc,
@@ -33,6 +52,10 @@ func TestStore(t *testing.T) {
 		t.Error(err)
 	}
 
+	if ok := s.Has(key); !ok {
+		t.Errorf("key %s should exist", key)
+	}
+
 	r, err := s.Read(key)
 	if err != nil {
 		t.Error(err)
@@ -43,8 +66,5 @@ func TestStore(t *testing.T) {
 		t.Errorf("have %s,have %s", data, b)
 	}
 
-	if err := s.Delete(key); err != nil {
-		t.Error(err)
-	}
-
+	s.Delete(key)
 }

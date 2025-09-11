@@ -1,4 +1,4 @@
-package main
+package store
 
 import (
 	"bytes"
@@ -13,6 +13,7 @@ import (
 
 const defaultRootFolderName = "dfs_store"
 
+// Content Addressable Storage
 func CASPathTransformFunc(key string) PathKey {
 	hash := sha1.Sum([]byte(key))
 	hashStr := hex.EncodeToString(hash[:])
@@ -107,6 +108,10 @@ func (s *Store) Delete(key string) error {
 	firstDirWithRoot := fmt.Sprintf("%s/%s", s.Root, pathKey.FirstDir())
 
 	return os.RemoveAll(firstDirWithRoot)
+}
+
+func (s *Store) Write(key string, r io.Reader) error {
+	return s.writeStream(key, r)
 }
 
 func (s *Store) Read(key string) (io.Reader, error) {

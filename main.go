@@ -1,13 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"log"
 	"time"
 
 	"github.com/affanhamid/goDFS/p2p"
-	"github.com/affanhamid/goDFS/store"
 )
 
 func makeServer(listenAddr string, nodes ...string) *FileServer {
@@ -20,7 +20,7 @@ func makeServer(listenAddr string, nodes ...string) *FileServer {
 	fileServerOpts := FileServerOpts{
 		EncKey:            NewEncryptionKey(),
 		StorageRoot:       listenAddr + "_network",
-		PathTransformFunc: store.CASPathTransformFunc,
+		PathTransformFunc: CASPathTransformFunc,
 		Transport:         tcpTransport,
 		BootstrapNodes:    nodes,
 	}
@@ -32,30 +32,46 @@ func makeServer(listenAddr string, nodes ...string) *FileServer {
 func main() {
 	s1 := makeServer(":3000", "")
 	s2 := makeServer(":4000", ":3000")
+	s3 := makeServer(":3001", ":3000", ":4000")
 
 	go func() {
 		log.Fatal(s1.Start())
 	}()
+	time.Sleep(time.Second * 2)
+	go func() {
+		log.Fatal(s2.Start())
+	}()
 
-	time.Sleep(1 * time.Second)
-
-	go s2.Start()
+	time.Sleep(2 * time.Second)
+	go s3.Start()
 	time.Sleep(2 * time.Second)
 
-	// data := bytes.NewReader([]byte("my big data file here!"))
-	// s2.Store("coolPicture.jpg", data)
-	// time.Sleep(5 * time.Millisecond)
+	for i := 0; i < 20; i++ {
 
-	r, err := s2.Get("coolPicture.jpg")
-	if err != nil {
-		log.Fatal(err)
+		key := fmt.Sprintf("picture_%d.png", i)
+
+		data := bytes.NewReader([]byte("my big data file here!"))
+		s3.Store(key, data)
+		time.Sleep(2 * time.Second)
+
+		if err := s3.store.Delete(key); err != nil {
+			log.Fatal(err)
+		}
+
+		r, err := s3.Get(key)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		time.Sleep(2 * time.Second)
+
+		b, err := io.ReadAll(r)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Println(string(b))
+
 	}
-
-	b, err := io.ReadAll(r)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println(string(b))
 
 }

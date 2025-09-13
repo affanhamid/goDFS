@@ -13,7 +13,7 @@ func NewEncryptionKey() []byte {
 	return keyBuf
 }
 
-func CopyDecrypt(key []byte, src io.Reader, dst io.Writer) (int, error) {
+func copyDecrypt(key []byte, src io.Reader, dst io.Writer) (int, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return 0, err
@@ -57,7 +57,7 @@ func CopyDecrypt(key []byte, src io.Reader, dst io.Writer) (int, error) {
 	return nw, nil
 }
 
-func CopyEncrypt(key []byte, src io.Reader, dst io.Writer) (int, error) {
+func copyEncrypt(key []byte, src io.Reader, dst io.Writer) (int, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return 0, err

@@ -11,13 +11,12 @@ import (
 	"time"
 
 	"github.com/affanhamid/goDFS/p2p"
-	"github.com/affanhamid/goDFS/store"
 )
 
 type FileServerOpts struct {
 	EncKey            []byte
 	StorageRoot       string
-	PathTransformFunc store.PathTransformFunc
+	PathTransformFunc PathTransformFunc
 	Transport         p2p.Transport
 	BootstrapNodes    []string
 }
@@ -27,18 +26,18 @@ type FileServer struct {
 
 	peerLock sync.Mutex
 	peers    map[string]p2p.Peer
-	store    *store.Store
+	store    *Store
 	quitch   chan struct{}
 }
 
 func NewFileServer(opts FileServerOpts) *FileServer {
-	storeOpts := store.StoreOpts{
+	storeOpts := StoreOpts{
 		Root:              opts.StorageRoot,
 		PathTransformFunc: opts.PathTransformFunc,
 	}
 	return &FileServer{
 		FileServerOpts: opts,
-		store:          store.NewStore(storeOpts),
+		store:          NewStore(storeOpts),
 		quitch:         make(chan struct{}),
 		peers:          make(map[string]p2p.Peer),
 	}
@@ -103,14 +102,13 @@ func (s *FileServer) Get(key string) (io.Reader, error) {
 		return nil, err
 	}
 
-	time.Sleep(time.Millisecond * 500)
-
 	for _, peer := range s.peers {
 		// First read the file size so we can limit the amount of bytes
 		// that we read from the connection so it will not hang
 		var fileSize int64
 		binary.Read(peer, binary.LittleEndian, &fileSize)
-		n, err := s.store.Write(key, io.LimitReader(peer, fileSize))
+
+		n, err := s.store.WriteDecrypt(s.EncKey, key, io.LimitReader(peer, fileSize))
 		if err != nil {
 			return nil, err
 		}
@@ -148,15 +146,13 @@ func (s *FileServer) Store(key string, r io.Reader) error {
 
 	time.Sleep(5 * time.Millisecond)
 
-	// TODO: use a multiwriter here
 	for _, peer := range s.peers {
 		peer.Send([]byte{p2p.IncomingStream})
-		n, err := CopyEncrypt(s.EncKey, fileBuffer, peer)
+		n, err := copyEncrypt(s.EncKey, fileBuffer, peer)
 		if err != nil {
 			return err
 		}
-
-		fmt.Println("recieved and written bytes to disk", n)
+		fmt.Printf("[%s] sent and written (%d) bytes to disk\n", s.Transport.Addr(), n)
 	}
 
 	return nil
@@ -236,7 +232,6 @@ func (s *FileServer) handleMessageGetFile(from string, msg MessageGetFile) error
 	// First send the "IncomingStream" byte to the peer
 	// and then we send the file size as int64
 	peer.Send([]byte{p2p.IncomingStream})
-	time.Sleep(500 * time.Millisecond)
 	binary.Write(peer, binary.LittleEndian, fileSize)
 
 	n, err := io.Copy(peer, r)

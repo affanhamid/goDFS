@@ -18,6 +18,7 @@ func makeServer(listenAddr string, nodes ...string) *FileServer {
 	}
 	tcpTransport := p2p.NewTCPTransport(tcpTransportOpts)
 	fileServerOpts := FileServerOpts{
+		EncKey:            NewEncryptionKey(),
 		StorageRoot:       listenAddr + "_network",
 		PathTransformFunc: store.CASPathTransformFunc,
 		Transport:         tcpTransport,

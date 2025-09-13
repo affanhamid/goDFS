@@ -32,12 +32,15 @@ func TestStore(t *testing.T) {
 
 		data := []byte("some jpg bytes")
 
-		assert.NoError(t, s.writeStream(key, bytes.NewReader(data)))
+		_, err := s.writeStream(key, bytes.NewReader(data))
+
+		assert.NoError(t, err)
 
 		assert.True(t, s.Has(key))
 
-		r, err := s.Read(key)
+		n, r, err := s.Read(key)
 		assert.NoError(t, err)
+		assert.Equal(t, n, int64(14))
 
 		b, _ := io.ReadAll(r)
 		assert.Equal(t, string(b), string(data))

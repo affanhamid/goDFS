@@ -2,7 +2,7 @@
 
 A peer-to-peer distributed file storage system built in Go, featuring encryption, content-addressable storage, and automatic replication across network nodes.
 
-## 🚀 Features
+## Features
 
 - **Peer-to-Peer Architecture**: Decentralized network where nodes can communicate with each other
 - **End-to-End Encryption**: AES-CTR encryption for secure file storage and transmission
@@ -11,7 +11,7 @@ A peer-to-peer distributed file storage system built in Go, featuring encryption
 - **TCP Transport Layer**: Custom P2P transport implementation with message streaming
 - **Concurrent Operations**: Thread-safe operations with goroutines for handling multiple connections
 
-## 🏗️ Architecture
+## Architecture
 
 The system consists of several key components:
 
@@ -20,7 +20,7 @@ The system consists of several key components:
 - **P2P Transport**: TCP-based communication layer for peer discovery and messaging
 - **Crypto**: AES-CTR encryption/decryption for secure file handling
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 - **Language**: Go 1.24.1
 - **Encryption**: AES-CTR with random IV generation
@@ -28,7 +28,7 @@ The system consists of several key components:
 - **Networking**: Custom TCP transport layer
 - **Serialization**: Go's built-in `gob` encoding for message passing
 
-## 🚦 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Go 1.24.1 or later
@@ -55,7 +55,7 @@ The system automatically starts three nodes:
 
 Files are automatically stored, replicated, and retrieved across the network with encryption.
 
-## 🔧 Key Implementation Details
+## Key Implementation Details
 
 - **Path Transformation**: Files are stored using SHA-1 hash-based directory structures for efficient content addressing
 - **Message Broadcasting**: Uses Go's `gob` encoding for efficient peer-to-peer communication
@@ -63,7 +63,7 @@ Files are automatically stored, replicated, and retrieved across the network wit
 - **Peer Management**: Thread-safe peer connection handling with automatic discovery
 - **Encryption**: Each file is encrypted with a unique IV for security
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 goDFS/
@@ -78,15 +78,3 @@ goDFS/
 │   └── handshake.go     # Peer handshake protocol
 └── bin/                 # Compiled binary output
 ```
-
-## 🎯 Learning Outcomes
-
-This project demonstrates:
-- Distributed systems design and implementation
-- Peer-to-peer networking concepts
-- Cryptographic file storage
-- Concurrent programming with Go
-- Network protocol design
-- Content-addressable storage patterns
-
-Built as a learning project to understand distributed systems fundamentals and Go's concurrency primitives.

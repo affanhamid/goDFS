@@ -12,7 +12,7 @@ func TestCopyEncryptDecrypt(t *testing.T) {
 	payload := "foo not bar"
 	src := bytes.NewReader([]byte(payload))
 	dst := new(bytes.Buffer)
-	key := NewEncryptionKey()
+	key := newEncryptionKey()
 
 	_, err := copyEncrypt(key, src, dst)
 	assert.NoError(t, err)

@@ -11,21 +11,20 @@ type Decoder interface {
 
 type GOBDecoder struct{}
 
-func (dec GOBDecoder) Decode(r io.Reader, v *RPC) error {
-	return gob.NewDecoder(r).Decode(v.Payload)
+func (dec GOBDecoder) Decode(r io.Reader, msg *RPC) error {
+	return gob.NewDecoder(r).Decode(msg)
 }
 
-type NOPDecoder struct{}
+type DefaultDecoder struct{}
 
-func (dec NOPDecoder) Decode(r io.Reader, msg *RPC) error {
+func (dec DefaultDecoder) Decode(r io.Reader, msg *RPC) error {
 	peekBuf := make([]byte, 1)
 	if _, err := r.Read(peekBuf); err != nil {
 		return nil
 	}
 
-	// In case of a stream, we are not decoding but it is
-	// being sent over the network. We are just setting
-	// Stream = true, so we can handle that in our logic.
+	// In case of a stream we are not decoding what is being sent over the network.
+	// We are just setting Stream true so we can handle that in our logic.
 	stream := peekBuf[0] == IncomingStream
 	if stream {
 		msg.Stream = true
@@ -37,6 +36,7 @@ func (dec NOPDecoder) Decode(r io.Reader, msg *RPC) error {
 	if err != nil {
 		return err
 	}
+
 	msg.Payload = buf[:n]
 
 	return nil
